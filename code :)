@@ -1,0 +1,152 @@
+using System;
+using System.IO;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace MusicPlaylistAnalyzer1
+{
+    class Music
+    {
+        public string Name;
+        public string Artist;
+        public string Album;
+        public string Genre;
+        public int Size;
+        public int Time;
+        public int Year;
+        public int Plays;
+    }
+    class Program
+    {
+       static void DisplayUsage()
+        {
+
+            Console.WriteLine("Invalid command line format.");
+            Console.WriteLine("");
+            Console.WriteLine("Usage:");
+            Console.WriteLine("MusicPlaylistAnalyzer1.exe <source> <destination>");
+            Console.WriteLine("       where:");
+            Console.WriteLine("           <source> - This is the input music list file name.");
+            Console.WriteLine("      <destination> - This is the output file name.");
+            Console.WriteLine("");
+        }
+        static void Main(string[] args)
+        {
+
+            if (args.Count() == 0)
+            {
+                DisplayUsage();             
+            }
+            else
+            { 
+            List<Music> MusicList = new List<Music>();
+            FileInfo fi=null;
+                try
+                {
+                    fi = new FileInfo(args[0]);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Invalid filename " + args[0] + ".  " + e.ToString());
+                    Environment.Exit(-1);
+                }
+                if (!fi.Exists)
+                {
+                    Console.WriteLine("File not found.  Try again.");
+                }
+                else
+                {
+                    fi = null;
+                    StreamReader reader = new StreamReader(args[0]);
+                    var line = reader.ReadLine();
+                    var values = line.Split('\t');
+                    do
+                    {
+                        line = reader.ReadLine();
+                        values = line.Split('\t');
+                        if (values.Length != 8)
+                            Console.WriteLine("Incorrect number of arguments found. Try again.");
+                        else
+                        {
+                            try
+                            {
+                                Music c = new Music();
+                                c.Name = values[0];
+                                c.Artist = values[1];
+                                c.Album = values[2];
+                                c.Genre = values[3];
+                                c.Size = Int32.Parse(values[4]);
+                                c.Time = Int32.Parse(values[5]);
+                                c.Year = Int32.Parse(values[6]);
+                                c.Plays = Int32.Parse(values[7]);
+                                MusicList.Add(c);
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine("Data format error.  " + e.ToString());
+                            }
+                        }
+                    }
+                    while (!reader.EndOfStream);
+                    reader.Close();
+                    try
+                    {
+                        StreamWriter sw = new StreamWriter(args[1]);
+                        sw.WriteLine("Music Playlist Report");
+                        sw.WriteLine();
+                        sw.WriteLine("Songs that received 200 or more plays:");
+                        var played200 = from Music in MusicList where Music.Plays >= 200 select new { Music.Name, Music.Artist, Music.Album, Music.Genre, Music.Size, Music.Time, Music.Year, Music.Plays };
+                        foreach (var m in played200)
+                        {
+                            sw.WriteLine("Name: " + m.Name + " Artist: " + m.Artist + " Album: " + m.Album + " Genre: " + m.Genre + " Size: " + m.Size + " Time: " + m.Time + " Year: " + m.Year + " Plays: " + m.Plays);
+                        }
+                        sw.WriteLine();
+                        var alt = from Music in MusicList where Music.Genre == "Alternative" select Music.Name;
+                        sw.WriteLine("Number of Alternative songs: " + alt.Count());
+                        sw.WriteLine();
+                        var rap = from Music in MusicList where Music.Genre == "Hip-Hop/Rap" select Music.Name;
+                        sw.WriteLine("Number of Hip-Hop/Rap songs: " + rap.Count());
+                        sw.WriteLine();
+                        sw.WriteLine("Songs from the album Welcome to the Fishbowl");
+                        var fish = from Music in MusicList where Music.Album == "Welcome to the Fishbowl" select new { Music.Name, Music.Artist, Music.Album, Music.Genre, Music.Size, Music.Time, Music.Year, Music.Plays };
+                        foreach (var m in fish)
+                        {
+                            sw.WriteLine("Name: " + m.Name + " Artist: " + m.Artist + " Album: " + m.Album + " Genre: " + m.Genre + " Size: " + m.Size + " Time: " + m.Time + " Year: " + m.Year + " Plays: " + m.Plays);
+                        }
+                        sw.WriteLine();
+                        sw.WriteLine("Songs from before 1970:");
+                        var old = from Music in MusicList where Music.Year < 1970 select new { Music.Name, Music.Artist, Music.Album, Music.Genre, Music.Size, Music.Time, Music.Year, Music.Plays };
+                        foreach (var m in old)
+                        {
+                            sw.WriteLine("Name: " + m.Name + " Artist: " + m.Artist + " Album: " + m.Album + " Genre: " + m.Genre + " Size: " + m.Size + " Time: " + m.Time + " Year: " + m.Year + " Plays: " + m.Plays);
+                        }
+                        sw.WriteLine();
+                        sw.WriteLine("Song names longer than 85 characters:");
+                        var longname = from Music in MusicList where Music.Name.ToString().Length > 85 select new { Music.Name };
+                        foreach (var m in longname)
+                        {
+                            sw.WriteLine(m.Name);
+                        }
+                        int maxtime = 0;
+                        foreach (var m in MusicList)
+                        {
+                            if (m.Time > maxtime)
+                                maxtime = m.Time;
+                        }
+                        sw.WriteLine();
+                        var longest = from Music in MusicList where Music.Time == maxtime select new { Music.Name, Music.Artist, Music.Album, Music.Genre, Music.Size, Music.Time, Music.Year, Music.Plays };
+                        sw.WriteLine("Longest song: Name: \"" + longest.First().Name + "\" Artist: " + longest.First().Artist + " Album: " + longest.First().Album + " Genre: " + longest.First().Genre + " Size: " + longest.First().Size + " Time: " + longest.First().Time + " Year: " + longest.First().Year + " Plays: " + longest.First().Plays);
+                        sw.Flush();
+                        sw.Close();
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Data format error.  " + e.ToString());
+                    }
+                }
+            }
+        }       
+    }
+}
